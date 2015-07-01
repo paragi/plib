@@ -1,4 +1,7 @@
-#A graphical presentation of sensor readings in an easy to view manner
+#A graphical presentation of numbers in an easy to view manner.
+Primarily for sensor readings.
+
+Please join in, if you have any improvement.
 
 ###Features:
 * Using only Javascript and HTML5 (No image files)
@@ -7,22 +10,31 @@
 * Easy to implement and customise
 * Lots of predefined color gradients
 * No dependencies
+* All is done with just one simple funtion call
 
-The  aim of the project is, eventually to present numbers without irrelevant information and in a manner that can be viewed with a glance.
+The aim of the project is to present numbers, without irrelevant information and in a manner that can be viewed with a glance.
 
 ![Overview](https://github.com/paragi/plib/blob/master/present.jpg)
 
-#######Easy to use:
-Define a HTML5 canvas tags, with a predefined size: 
+#####Easy to use:
+Define a canvas tags, with the proper dimensions and an ID in you HTML:  
 
     <canvas id="gauge1"  width="200" height="200" ></canvas>
 
-Add a call to presentation lib, with some styling options:
+Secondly make a Javascript call to the library; 
+use the ID, a value and some presentation options to  style it:
 
-    p.present("gauge1",0,"temperature","gauge color=tempout low=-50 high=50 prefix=\u00B0C");
+    p.present("gauge1",10,"gauge");
 
-Subsequent call (Without options) changes only the values as they occur:
+When the value changes, call the library again with the new value, but without styling options:
 
     p.present("gauge1",12.5);
 
-If the value is an array/object with multiple values, data will be displayed as a graph.
+You can have a many unique presentations on a page, as you like.
+
+
+##### Generator
+Use the generator page to fine tune your styling options and cut/paste it to your code.
+(The generator is just a single html page, requiring the library)
+
+
