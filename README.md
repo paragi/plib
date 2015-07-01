@@ -1,4 +1,4 @@
-#A graphical presentation of numbers in an easy to view manner.
+#A graphical presentation of numbers - easy to view at a glance.
 Primarily for sensor readings.
 
 Please join in, if you have anything to contribute!
