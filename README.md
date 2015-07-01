@@ -1,7 +1,7 @@
 #A graphical presentation of numbers in an easy to view manner.
 Primarily for sensor readings.
 
-Please join in, if you have any improvement.
+Please join in, if you have anything to contribute!
 
 ###Features:
 * Using only Javascript and HTML5 (No image files)
