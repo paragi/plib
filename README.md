@@ -19,18 +19,18 @@ The aim of the project is to present numbers, without irrelevant information and
 #####Easy to use:
 Define a canvas tags, with the proper dimensions and an ID in you HTML:  
 
-    <canvas id="gauge1"  width="200" height="200" ></canvas>
+    <canvas id="gauge1" width="200" height="200" ></canvas>
 
-Secondly make a Javascript call to the library; 
+Secondly make a Javascript call to the present library function; 
 use the ID, a value and some presentation options to  style it:
 
     p.present("gauge1",10,"gauge");
 
-When the value changes, call the library again with the new value, but without styling options:
+When the value changes, call the present function again with the new value, but without styling options:
 
     p.present("gauge1",12.5);
 
-You can have a many unique presentations on a page, as you like.
+You can have as many unique presentations on a page, as you like.
 
 
 ##### Generator
