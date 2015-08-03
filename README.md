@@ -25,11 +25,11 @@ The aim of the project is to present numbers, without irrelevant information and
 2 - make a Javascript call to the present library function; 
 use the ID, a value and some presentation options to  style it:
 
-    p.present("gauge1",10,"gauge");
+    present("gauge1",10,"gauge");
 
 3 - When the value changes, call the present function again with the new value, but without styling options:
 
-    p.present("gauge1",12.5);
+    present("gauge1",12.5);
 
 You can have as many unique presentations on a page, as you like.
 
