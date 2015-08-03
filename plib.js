@@ -3,32 +3,32 @@
 
   (c) Simon Rigét at Paragi
 
-  Version 0.8.1
+  Version 0.9.1
   
   Basicly free to use.
 
-  A Javascript to present sensordata, using HTML5 canvas.
-
   Present sensordata etc. in an easy to view maner
-  Aims to present numbers without irrelevant information and in a maner that can be viewed
-  with a glance.
+  Aims to present numbers without irrelevant information and in a maner that can
+  be viewed at a glance.
 
-  A collection of graphical presentation of sensor readings 
+  A Javascript to present sensordata, mainly using HTML5 canvas.
 
-  uses HTML5 canvas tags, with a predefined size. 
-  The presentation are partially vectored to fit most resonable sizes
+	Usages:
+  Define a HTML5 canvas tags, with a predefined size. 
+  (The presentation are partially vectored to fit most resonable sizes)
+
+  call present with tag ID, a number or an array of numbers and display options.
+
+  Whenever the value changes, call present function with ID and the new value.
+	Options and call back function can be omitted on subsequent calls.
+
+	Add call a back function for reveiving user input.
 
 
-  temp settings
-    indoor
-    outdoor
-    water
-    hot water
 
 
-  id value is an array/object a graph vill be displayed, if output emmelemt is a canvas
-  
-  Option object:
+  ** to be revised
+  Options:
   
   display=<type> : Select display type
     n     : number
@@ -62,33 +62,35 @@
 
   
   custom settings of predefined color scales
-  sh<%>   : High end of scale where 0 it the top, 100 the bottom.
-  sl<%>   : low end of scale where 0 it the top, 100 the bottom.
+  sh<%>   : High end of scale where 100 is the top, 0 the bottom.
+  sl<%>   : low end of scale where 100 is the top, 0 the bottom.
   bgsh<%>   : High end of scale where 0 it the top, 100 the bottom.
   bgsl<%>   : low end of scale where 0 it the top, 100 the bottom.
 
   Value can be a numeric value or an object; etiher as an array of numbers or 
   containing scalar arrays named y,[x],[z]
-\*============================================================================*/
+/*============================================================================*\
 
-var p={};
-// Supported types of data
-p._types=['number','words','bytes','bits','temperature','presure','waterlevel'
-  ,'volt','ampere','windspeed','speed'];
+/*============================================================================*\
+	Create present object
+/*============================================================================*/
+present=function(tagID,value,options,callBackFunction){
+  present.entry(tagID,value,options,callBackFunction);
+}
 
 // Supported options
-p._options=[ 'verbal', 'bar', 'gauge', 'graph', 'high', 'low', 'color', 'xhigh' , 'xlow'
+present._options=[ 'verbal', 'bar', 'gauge', 'graph', 'time', 'high', 'low', 'color', 'xhigh' , 'xlow'
   , 'colorhigh', 'colorlow', 'bgcolor', 'bgcolorhigh', 'bgcolorlow'
   , 'prefix', 'show_prefix', 'show_value', 'precision'
   , 'hand-color', 'outdoor','precision', 'indoor', 'hot-water'];
 
 
 // Supported scale or background color gradients
-p._colors=["tempout","tempin","tempwater","tempboiler","pressure","water","light","bgr","byr"
-  ,"gyr","rgr"];
+present_colors=["tempout","tempin","tempwater","tempboiler","pressure","water","light","brightness","process","humidity",
+"filter","bgr","byr","gyr","rgr","rwr","bwr"];
 
 // Defaults values
-p._defaults={
+present._defaults={
    valueChange:false
   ,graphicOut:false
   ,handColor:"#F00"
@@ -104,35 +106,38 @@ p._defaults={
 };
 
 // Prefixes for very large and small numbers
-p._prefix_small=['','m','&#181;','n','p','f','a','z','y'];
-p._prefix_big=['','K','M','G','T','P','E','Z','Y','H'];
+present._prefix_small=['','m','&#181;','n','p','f','a','z','y'];
+present._prefix_big=['','K','M','G','T','P','E','Z','Y','H'];
 // for bytes: KMGTPEZYXWVU
 
 // array of pressentations and there settings
-p._elm={};
+present._elm={};
+
 
 /*============================================================================*\
-  Present a number or array
-  type and options can be omitted on second call to function, with the same ID
+	Entry function
 
-  If value are not given, only the scale are presented\*============================================================================*/
-p.present=function(id,val,type,opt){
+	- Process and validate options, if any
+	- Choose an presentation engine to execute on the given tag
+
+/*============================================================================*/
+present.entry=function(id,val,opt,cb){
   function error(text){
-    throw new Error("p.present('"+id+"',"+val+",'"+type+"','"+opt+"') "+ text);
+    throw new Error("present('"+id+"',"+val+",'"+opt+"') "+ text);
   }
 
   if(!id) error("Tag ID must be given");
   
   // Get pressentations settings
-  if(typeof p._elm[id] === 'object'){
-    var pres=p._elm[id];
+  if(typeof present._elm[id] === 'object'){
+    var pres=present._elm[id];
     // See if we need to redraw the whole pressentation
     pres.valueChange= (typeof opt === 'undefined' || pres.opt==opt);
   }
 
   // Create new pressentation
   if(typeof pres !== 'object' || !pres.valueChange){
-    var pres=p._elm[id]=Object.create(p._defaults);
+    var pres=present._elm[id]=Object.create(present._defaults);
     // Get tag element  
     pres.tag=document.getElementById(id);
     if(typeof pres.tag !== 'object') error("Parameter 1 must be a tag id");
@@ -142,6 +147,7 @@ p.present=function(id,val,type,opt){
 
     // Store pressentation option string for later comparison
     pres.opt=opt;
+    pres.callback=cb;
 
   }
 
@@ -150,7 +156,7 @@ p.present=function(id,val,type,opt){
     // Add option array to presention
     if(typeof opt ==='object'){
       for(var key in opt)
-        if(key in p._options)
+        if(key in present._options)
           pres[key]=opt[key];
         else
           console.error("option %s is not supported",key);
@@ -160,7 +166,7 @@ p.present=function(id,val,type,opt){
       var opte;
       for(var key in opta){
         opte=opta[key].split('=');
-        if( p._options.indexOf(opte[0]) >= 0){
+        if( present._options.indexOf(opte[0]) >= 0){
           if(typeof(opte[1]) !== 'undefined')
             pres[opte[0]]=opte[1];
           else
@@ -172,8 +178,8 @@ p.present=function(id,val,type,opt){
     // Make graphic option values sane
     if(pres.graphicOut){
       //scale color gradient 
-      if(!pres.color && p._colors.indexOf(type) >=0) pres.color=type;
-      if(p._colors.indexOf(pres.color) === null) pres.color="pressur";
+//      if(!pres.color && present_colors.indexOf(type) >=0) pres.color=type;
+      if(present_colors.indexOf(pres.color) === null) pres.color="pressur";
 
       // Make high low values into numbers
       pres.high=+(pres.high);
@@ -198,12 +204,17 @@ p.present=function(id,val,type,opt){
   if(pres.prefix && pres.prefix.length>0) pres.show_prefix=true;;
 
   // Choose presentation engine
-  if(pres.gauge && pres.graphicOut) p.gauge(pres);
-  else if(pres.graph && pres.graphicOut) p.graph(pres);
-  else if(pres.bar && pres.graphicOut) p.bar(pres);
-  else if(pres.verbal) p.verbal(pres);
-  else p.text(pres); // Default
+  if(pres.gauge && pres.graphicOut) present.gauge(pres);
+  else if(pres.graph && pres.graphicOut) present.graph(pres);
+  else if(pres.bar && pres.graphicOut) present.bar(pres);
+  else if(pres.time && pres.graphicOut && typeof present.time ==='function') present.time(pres);
+  else if(pres.verbal) present.verbal(pres);
+  else present.text(pres); // Default
 }
+
+/*============================================================================*\
+	*****************             Display engines             	*****************
+/*============================================================================*/
 
 /*============================================================================*\
   Gauge display 
@@ -214,7 +225,7 @@ p.present=function(id,val,type,opt){
 
 Brug div tag og opret alle canvasses her
 \*============================================================================*/
-p.gauge= function(pres){
+present.gauge= function(pres){
 
   // Set some dimentions
   if(pres.tag.offsetHeight>pres.tag.offsetWidth)
@@ -224,8 +235,8 @@ p.gauge= function(pres){
   var rw=r/20;
 
   // Calculate font height
-  var lenL=(p.humanizeNumber(pres.low,2)+'').length;
-  var len=(p.humanizeNumber(pres.high,2)+'').length;
+  var lenL=(present.humanizeNumber(pres.low,2)+'').length;
+  var len=(present.humanizeNumber(pres.high,2)+'').length;
   if(lenL>len) len=lenL;
   var fh=parseInt(r/len/1.7);
 
@@ -235,10 +246,10 @@ p.gauge= function(pres){
   if(!pres.diskLayer || !pres.valueLayer){
     pres.valueChange=false;
     // Add layers
-    var housingLayer=p._addLayer(pres.tag).getContext("2d");
-    pres.diskLayer=p._addLayer(pres.tag).getContext("2d");
-    var scaleLayer=p._addLayer(pres.tag).getContext("2d");
-    pres.valueLayer=p._addLayer(pres.tag).getContext("2d");
+    var housingLayer=present._addLayer(pres.tag).getContext("2d");
+    pres.diskLayer=present._addLayer(pres.tag).getContext("2d");
+    var scaleLayer=present._addLayer(pres.tag).getContext("2d");
+    pres.valueLayer=present._addLayer(pres.tag).getContext("2d");
 
     // preset origin to center
     housingLayer.translate(pres.tag.offsetWidth/2,pres.tag.offsetHeight/2);
@@ -290,7 +301,7 @@ p.gauge= function(pres){
       scaleLayer.rotate(Math.PI/40);
       scaleLayer.beginPath();
       scaleLayer.rect(-r+2.5*rw,0,r/10,lc);
-      scaleLayer.fillStyle=p._gradient(scaleLayer,pres.color,lt,i*lc-lc,pres.colorhigh,pres.colorlow);
+      scaleLayer.fillStyle=present._gradient(scaleLayer,pres.color,lt,i*lc-lc,pres.colorhigh,pres.colorlow);
       scaleLayer.fill();
       scaleLayer.closePath();
     }
@@ -313,7 +324,7 @@ p.gauge= function(pres){
     // Add numbers
     scaleLayer.fillStyle="#fff";
     for(var n=+(pres.low),i=0; i<6;n+=(pres.high-pres.low)/5,i++){
-      nr=p.humanizeNumber(n,2)+'';
+      nr=present.humanizeNumber(n,2)+'';
       // Calculate turn degrees
       var d=235-i*58;
       var x=Math.cos(-d*(Math.PI/180))*r*0.4-scaleLayer.measureText(nr).width/2 
@@ -434,8 +445,8 @@ p.gauge= function(pres){
   if(pres.show_value && !noValue){ 
     // Decrease precision for very small numbers
     var o=parseFloat(((pres.high-pres.low)/25).toPrecision(1));  
-    var n=(o+pres.val).toPrecision(pres.precision) - o ; 
-    text=p.humanizeNumber(n,pres.precision);
+    var n=(o+Number(pres.val)).toPrecision(pres.precision) - o ; 
+    text=present.humanizeNumber(n,pres.precision);
   }
   if(pres.show_prefix) 
     text+=pres.prefix;
@@ -463,7 +474,7 @@ p.gauge= function(pres){
 
 
 \*============================================================================*/
-p.bar= function(pres){
+present.bar= function(pres){
 
   // Set some dimentions
   var fx;
@@ -493,10 +504,10 @@ p.bar= function(pres){
   if(!pres.plateLayer || !pres.valueLayer || !pres.prefixLayer){
     pres.valueChange=false;
     // Add layers
-    pres.plateLayer=p._addLayer(pres.tag).getContext("2d");
-    var housingLayer=p._addLayer(pres.tag).getContext("2d");
-    pres.valueLayer=p._addLayer(pres.tag).getContext("2d");
-    pres.prefixLayer=p._addLayer(pres.tag).getContext("2d");
+    pres.plateLayer=present._addLayer(pres.tag).getContext("2d");
+    var housingLayer=present._addLayer(pres.tag).getContext("2d");
+    pres.valueLayer=present._addLayer(pres.tag).getContext("2d");
+    pres.prefixLayer=present._addLayer(pres.tag).getContext("2d");
 
     // preset origin 
     pres.valueLayer.translate(mx,my-mym);
@@ -526,7 +537,7 @@ p.bar= function(pres){
       // Add marker
       housingLayer.moveTo(mx-height * 0.05 ,y); housingLayer.lineTo(mx + mw + height * 0.05,y);
       // Add number
-      nr=p.humanizeNumber(n);
+      nr=present.humanizeNumber(n);
       housingLayer.fillText(nr,mx-height * 0.07-housingLayer.measureText(nr).width,y+fh/4); 
     }
     housingLayer.stroke(); 
@@ -590,7 +601,7 @@ p.bar= function(pres){
     else if (gh<0) gh=0; 
     
     // Make color column
-    pres.valueLayer.fillStyle=p._gradient(pres.valueLayer,pres.color,mh,-mym,pres.colorhigh,pres.colorlow);
+    pres.valueLayer.fillStyle=present._gradient(pres.valueLayer,pres.color,mh,-mym,pres.colorhigh,pres.colorlow);
     
     // Make bar
     pres.valueLayer.fillRect(0,gh,mw,mh+2*mym-gh);
@@ -611,8 +622,8 @@ p.bar= function(pres){
   if(pres.show_value && !noValue){ 
     // Decrease precision for very small numbers
     var o=parseFloat(((pres.high-pres.low)/25).toPrecision(1));  
-    var n=(o+pres.val).toPrecision(pres.precision) - o ; 
-    text=p.humanizeNumber(n,pres.precision);
+    var n=(o+Number(pres.val)).toPrecision(pres.precision) - o ; 
+    text=present.humanizeNumber(n,pres.precision);
   } 
   if(pres.show_prefix) 
     text+=pres.prefix;
@@ -628,15 +639,15 @@ p.bar= function(pres){
 }
 
 
-p.text= function(pres){
+present.text= function(pres){
   // Make text
   if(pres.high && pres.low){
     // Decrease precision for very small numbers
     var o=(pres.high+pres.low)/50;  
-    var n=((o+pres.val).toPrecision(pres.precision) - o).toPrecision(pres.precision);
+    var n=((o+Number(pres.val)).toPrecision(pres.precision) - o).toPrecision(pres.precision);
   }else
     var n=pres.val;
-  var text=p.humanizeNumber(n,pres.precision);
+  var text=present.humanizeNumber(n,pres.precision);
   if(pres.show_prefix) text+=pres.prefix;
 
   // Text on graphic element
@@ -669,7 +680,7 @@ p.text= function(pres){
     consol.error("Use a tag type that has an output");
 };
 
-p.verbal= function(pres){};
+present.verbal= function(pres){};
 
 /*
   // Verbal presentation
@@ -709,7 +720,7 @@ p.verbal= function(pres){};
 
   Assume values are between 0 - 100 if not specified
 \*============================================================================*/
-p.graph= function(pres){
+present.graph= function(pres){
 
   // Y Values
   var yval;
@@ -721,8 +732,8 @@ p.graph= function(pres){
   if(!pres.gritLayer || !pres.valueLayer){
     pres.valueChange=false;
     // Add layers
-    pres.gritLayer=p._addLayer(pres.tag).getContext("2d");
-    pres.valueLayer=p._addLayer(pres.tag).getContext("2d");
+    pres.gritLayer=present._addLayer(pres.tag).getContext("2d");
+    pres.valueLayer=present._addLayer(pres.tag).getContext("2d");
   }
   
   // Draw grit and scales
@@ -766,7 +777,7 @@ p.graph= function(pres){
     pres.gritLayer.font=pres.font.replace("#", fh);
     var step=(pres.high-pres.low)/4;
     for(var text,i=0,ytw=0;i<5;i++){
-      text=p.humanizeNumber(pres.high-i*(pres.high-pres.low)/4, pres.precision);
+      text=present.humanizeNumber(pres.high-i*(pres.high-pres.low)/4, pres.precision);
       ytw=Math.max(ytw,pres.gritLayer.measureText(text).width); 
     }
 
@@ -782,7 +793,7 @@ p.graph= function(pres){
         pres.gritLayer.fillStyle=pres.bgcolor;
       else
        pres.gritLayer.fillStyle = 
-         p._gradient(pres.gritLayer,pres.bgcolor,0,0,pres.bgcolorhigh,pres.bgcolorlow);
+         present._gradient(pres.gritLayer,pres.bgcolor,0,0,pres.bgcolorhigh,pres.bgcolorlow);
       pres.gritLayer.fillRect(0,0,width,height); 
     }
 
@@ -805,7 +816,7 @@ p.graph= function(pres){
     pres.gritLayer.textBaseline = "middle";
     for(var text,i=0;i<5;i++){
       // Place text
-      text=p.humanizeNumber(pres.high-i*(pres.high-pres.low)/4, pres.precision);
+      text=present.humanizeNumber(pres.high-i*(pres.high-pres.low)/4, pres.precision);
       x=gx-pres.gritLayer.measureText(text).width-mw; 
       y=gy+i*gh/4;
       // Find background color
@@ -827,7 +838,7 @@ p.graph= function(pres){
       pres.gritLayer.moveTo(x,y);
       pres.gritLayer.lineTo(x,y+gh);
       // Add scale values
-      text=p.humanizeNumber(pres.xlow+i*(pres.xhigh-pres.xlow)/vl, pres.precision);
+      text=present.humanizeNumber(pres.xlow+i*(pres.xhigh-pres.xlow)/vl, pres.precision);
       pres.gritLayer.fillText(text,x,y+gh+2*mh);
     }
     pres.gritLayer.stroke();
@@ -884,7 +895,7 @@ p.graph= function(pres){
 
   // Add fill
   pres.valueLayer.fillStyle= 
-    p._gradient(pres.valueLayer,pres.color,pres.h,0,pres.colorhigh,pres.colorlow);
+    present._gradient(pres.valueLayer,pres.color,pres.h,0,pres.colorhigh,pres.colorlow);
   pres.valueLayer.lineTo(x,pres.h);
   pres.valueLayer.lineTo(0,pres.h);
   pres.valueLayer.lineTo(curve[0], curve[1]);
@@ -904,6 +915,10 @@ p.graph= function(pres){
   }
 
 }
+
+/*============================================================================*\
+	*****************           Internal functions             *****************
+/*============================================================================*/
 
 /*============================================================================*\
   Make a gradient  
@@ -926,7 +941,7 @@ p.graph= function(pres){
           values are in % of scale
   
 \*============================================================================*/
-p._gradient=function(ctx,name,size,offset,high,low){
+present._gradient=function(ctx,name,size,offset,high,low){
   if(typeof size ==='undefined') size=100;
   if(typeof offset==='undefined') offset=0;
   if(typeof high==='undefined') high=0;
@@ -935,7 +950,7 @@ p._gradient=function(ctx,name,size,offset,high,low){
  
 // Get canvas context object
   if(typeof(ctx.createLinearGradient) != 'function') {
-    console.error("p._gradient: context is not a canvas");
+    console.error("present._gradient: context is not a canvas");
     return;
   }
 
@@ -1074,10 +1089,10 @@ p._gradient=function(ctx,name,size,offset,high,low){
       break;
     default:
       // pressure bwr
-      grd.addColorStop("0","#08e");
+      grd.addColorStop("0","#f00");
       grd.addColorStop("0.4","#bFF");
       grd.addColorStop("0.6","#bFF");
-      grd.addColorStop("1","#f00");
+      grd.addColorStop("1","#08e");
   }
 
   return grd;
@@ -1086,7 +1101,7 @@ p._gradient=function(ctx,name,size,offset,high,low){
 /*============================================================================*\
   Canvas layer functions
 \*============================================================================*/
-p._addLayer=function(canvas){
+present._addLayer=function(canvas){
   // Create layer stack
   if(!canvas._layerStack) canvas._layerStack=[];
 
@@ -1102,7 +1117,7 @@ p._addLayer=function(canvas){
   layer.style.backgroundColor = "transparent";
 
   // Place layer on top of original
-  var pos=p.absPos(canvas);
+  var pos=present._tabsPos(canvas);
   layer.style.left=pos[0]+'px';  
   layer.style.top=pos[1]+'px';
 
@@ -1112,7 +1127,7 @@ p._addLayer=function(canvas){
   // Redo placement on window resize
   // When implemented use "DOMAttrModified" event
   window.addEventListener('resize', function(event){
-    var pos=p.absPos(canvas);
+    var pos=presen._tabsPos(canvas);
     layer.style.left=pos[0]+'px';  
     layer.style.top=pos[1]+'px';
   },canvas);
@@ -1120,7 +1135,7 @@ p._addLayer=function(canvas){
   return layer;
 }
 
-p.absPos=function (obj) {
+present._tabsPos=function (obj) {
 	var curleft = curtop = 0;
   if (obj.offsetParent) do {
 			curleft += obj.offsetLeft;
@@ -1130,6 +1145,9 @@ p.absPos=function (obj) {
   return [curleft,curtop];
 }
 
+/*============================================================================*\
+  Extend CanvasRenderingContext2D with a spline curve function
+\*============================================================================*/
 /*! Curve extension for canvas 2.1
 * Epistemex (c) 2013-2014
 * License: MIT
@@ -1245,15 +1263,16 @@ function time_ago($tm,$rcs = 1) {
 
 
 /*============================================================================*\
-  Present a number in a humanly easy to read way by using prefixes for very large and 
-  small numbers and by limiting numbers to a reasonable amount of significant digits.
+  Present a number in a humanly easy to read way by using prefixes for very 
+  large and small numbers and by limiting numbers to a reasonable amount of 
+  significant digits.
 
   Returns a string
 
   Default base for order of magnitude = 1000
 \*============================================================================*/
 
-p.humanizeNumber=function(number,precision){
+present.humanizeNumber=function(number,precision){
 
   if( typeof precision === 'undefined') precision=2;
   // Convert to exponential notation
@@ -1266,13 +1285,13 @@ p.humanizeNumber=function(number,precision){
   // find magnitude and prefix
   if(e<-1){
     // Small numbers
-    var prefix=p._prefix_small[~~(Math.abs(e-2)/3)];
+    var prefix=present._prefix_small[~~(Math.abs(e-2)/3)];
     // Adjust mantissa to magnitude 
     if(prefix) n=n*Math.pow(10,(3+e%3)%3);
 
   }else{
     // Big numbers
-    var prefix=p._prefix_big[~~(Math.abs(e)/3)];
+    var prefix=present._prefix_big[~~(Math.abs(e)/3)];
     // Adjust mantissa to magnitude 
     if(prefix) n=n*Math.pow(10,e%3); 
   }

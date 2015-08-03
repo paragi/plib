@@ -1,0 +1,30 @@
+{
+  "name": "plib",
+  "version": "0.9.1",
+  "description": "A graphical presentation library for sensor data etc. using HTML5 canvas ",
+  "main": "plib.js",
+  "scripts": {
+    "test": "demo.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paragi/plib"
+  },
+  "keywords": [
+"Javascript"
+,"HTML5"
+,"analog"
+,"readout"
+,"sensor"
+,"gauge"
+,"gauges"
+,"bar"
+,"bars"
+,"graphical"
+,"graph"
+  ],
+  "author": "Simon Riget @Paragi",
+  "bugs": {
+    "url": "https://github.com/paragi/plib/issues"
+  }
+}

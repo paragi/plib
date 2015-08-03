@@ -1,3 +1,4 @@
+
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -79,35 +80,35 @@ span{
 <script type="text/JavaScript" charset="utf-8">
 
 // Initialize gauges
-p.present("g1",10,"temperature","gauge color=tempout low=-50 high=50 prefix=\u00B0C");
-p.present("g2",60,"temperature","gauge color=byr low=50 high=100  show_value prefix=\u00B0C");
-p.present("g3",150,"pressure","gauge color=process low=100 high=600 prefix=kPa");
-p.present("g4",150000,"volt","gauge color=rgr low=0 high=500000 prefix=\u007EV");
+present("g1",10,"gauge color=tempout low=-50 high=50 prefix=\u00B0C");
+present("g2",60,"gauge color=byr low=50 high=100  show_value prefix=\u00B0C");
+present("g3",150,"gauge color=process low=100 high=600 prefix=kPa");
+present("g4",150000,"gauge color=rgr low=0 high=500000 prefix=\u007EV");
 
 // Initialize bars
-p.present("b1",21,"temperature","bar color=tempin low=15 high=25 prefix=\u00B0C");
-p.present("b2",90,"","bar color=bgr low=0 high=200 prefix=cm");
-p.present("b3",90,"water","bar color=filter prefix=%");
-p.present("b4",15,"watertemp","bar color=tempwater low=0 high=24 show_value prefix=\u00B0C");
-p.present("b5",78,"","bar color=rgr");
-p.present("b6",65,"","bar color=byr");
-p.present("b7",87,"","bar color=humidity");
-p.present("b8",3500,"light","bar color=light low=800 high=6000 prefix=K");
+present("b1",21,"bar color=tempin low=15 high=25 prefix=\u00B0C");
+present("b2",90,"bar color=bgr low=0 high=200 prefix=cm");
+present("b3",90,"bar color=filter prefix=%");
+present("b4",15,"bar color=tempwater low=0 high=24 show_value prefix=\u00B0C");
+present("b5",78,"bar color=rgr");
+present("b6",65,"bar color=byr");
+present("b7",87,"bar color=humidity");
+present("b8",3500,"bar color=light low=800 high=6000 prefix=K");
 
 // Initialize graphs
 var val=[20,19,20,19,20,21,20,21,21,20,19,17,19,21,21,22,22,23,22,22,20,20,19,20,21,20,21,21,20,19,17,19,21,21,22,22,23,22,22,21]
-p.present("c1",val,"temperature","graph color=tempin low=15 high=25 prefix=\u00B0C");
+present("c1",val,"graph color=tempin low=15 high=25 prefix=\u00B0C");
 
 var val={};
 val.y=[50,60,80,85,105,95,105,120,156,175,170]
 val.x=[-100,-50,0,50,100,150,200,250,300,350,400]
-p.present("c2",val,"waterlevel","graph color=water low=0 high=250 prefix=cm bgcolor=water bgcolorlow=10");
+present("c2",val,"graph color=water low=0 high=250 prefix=cm bgcolor=water bgcolorlow=10");
 
-//p.present("c3",100,"waterlevel","graph color=filter");
+//present("c3",100,"graph color=filter");
 // Initialize scalars
-p.present("s1",35,"watt","high=1.0e+10 prefix=J");
-p.present("s2",35,"Ampare","text prefix=A");
-p.present("s3",35,"temperature","");
+present("s1",35,"high=1.0e+10 prefix=J");
+present("s2",35,"text prefix=A");
+present("s3",35);
 
 
 // Animate data streams
@@ -128,23 +129,23 @@ function update(button){
     }
 
   // Loop through all presentations
-  for( var i in p._elm){
-    if(typeof(p._elm[i].val) !== 'undefined'){
+  for( var i in present._elm){
+    if(typeof(present._elm[i].val) !== 'undefined'){
 
       // Find value to change
-      if(p._elm[i].val instanceof Array){
-        a=p._elm[i].val;
-        v=p._elm[i].val[p._elm[i].val.length-1];
-      }else if(p._elm[i].val.y instanceof Array){
-        a=p._elm[i].val.y
-        v=p._elm[i].val.y[p._elm[i].val.y.length-1];
+      if(present._elm[i].val instanceof Array){
+        a=present._elm[i].val;
+        v=present._elm[i].val[present._elm[i].val.length-1];
+      }else if(present._elm[i].val.y instanceof Array){
+        a=present._elm[i].val.y
+        v=present._elm[i].val.y[present._elm[i].val.y.length-1];
       }else{
         a=null;
-        v=p._elm[i].val;
+        v=present._elm[i].val;
       }
 
       // Make new value
-      nv=p._elm[i].low+((Math.sin(ci+offset*5)*Math.sin(ci*4)+1)/2)*(p._elm[i].high-p._elm[i].low);
+      nv=present._elm[i].low+((Math.sin(ci+offset*5)*Math.sin(ci*4)+1)/2)*(present._elm[i].high-present._elm[i].low);
 
       // Assign new value
       if(a instanceof Array){
@@ -152,11 +153,11 @@ function update(button){
         // Remove oldest value
         a.shift();
       }else{
-        p._elm[i].val=nv;
+        present._elm[i].val=nv;
       }
 
       // Show new value
-      p.present(i,p._elm[i].val);
+      present(i,present._elm[i].val);
     }
     offset++;
   }
@@ -171,3 +172,4 @@ function update(button){
 </script>
 </body>
 </html>
+
